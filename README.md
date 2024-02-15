@@ -26,7 +26,7 @@ pip install scipy
 pip install tqdm
 ```
 
-## load the pretrained model
+## Load the pretrained model
 please download the trained model through following link,  and store the model under `kik_net_trained_model` folder
 https://drive.google.com/file/d/18k366Y4UmaGoYxepwzZaGo_nw6Kup0cW/view?usp=sharing
 
@@ -34,4 +34,4 @@ https://drive.google.com/file/d/18k366Y4UmaGoYxepwzZaGo_nw6Kup0cW/view?usp=shari
 run `tutorials_for_cGmGANO.ipynb` file for generating 3C waveforms 
 
 ## Train your own cGM-GANO
-runt `train_GANO.ipynb`
+run `train_GANO.ipynb`
