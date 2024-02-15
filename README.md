@@ -7,23 +7,23 @@ for more information about GANO implementation, please refer to [GANO](https://g
 
 create conda environment and install necessary libraries
 ```
-`conda create --name gano`
+conda create --name gano
 
-`conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia`
+conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
 
-`conda install -c anaconda ipykernel`
+conda install -c anaconda ipykernel
 
-`pip install ipykernel`
+pip install ipykernel
 
-`python -m ipykernel install --user --name=gano`
+python -m ipykernel install --user --name=gano
 
-`conda install pandas`
+conda install pandas
 
-`conda install matplotlib`
+conda install matplotlib
  
-`pip install scipy`
+pip install scipy
 
-`pip install tqdm`
+pip install tqdm
 ```
 
 ## 3. Pre-trained model
