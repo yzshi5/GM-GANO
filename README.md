@@ -1,6 +1,6 @@
 # cGM-GANO
 ![demo](https://github.com/yzshi5/GM-GANO/blob/main/model.png)
-The repository contains code for [Broadband Ground Motion Synthesis via Generative Adversarial Neural Operators: Development and Validation](https://arxiv.org/abs/2309.03447)
+The repository contains code for [Broadband Ground Motion Synthesis via Generative Adversarial Neural Operators: Development and Validation](https://pubs.geoscienceworld.org/ssa/bssa/article/doi/10.1785/0120230207/636448/Broadband-Ground-Motion-Synthesis-via-Generative) (also available in [arxiv](https://arxiv.org/abs/2309.03447))
 , for more information about GANO implementation, please refer to [GANO](https://github.com/neuraloperator/GANO)
 
 ## Installation
