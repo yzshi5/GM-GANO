@@ -24,6 +24,8 @@ conda install matplotlib
 pip install scipy
 
 pip install tqdm
+
+pip install opencv-python
 ```
 
 ## Load the pretrained model
