@@ -94,46 +94,57 @@ class Generator(nn.Module):
         self.padding = pad  # pad the domain if input is non-periodic
         self.training = training
         
+        self.final_dim = self.ndim + self.padding
+
         self.fc0 = nn.Linear(self.in_width, self.width)
+
         # input: 6400, output D1*factor = 4800, model=2400
-        self.conv0 = SpectralConv1d(self.width, 2*factor*self.width, 4800, 2400)  # last mode < D1 * (factor) / 2 
+        #self.conv0 = SpectralConv1d(self.width, 2*factor*self.width, 4800, 2400)  # last mode < D1 * (factor) / 2 
+        self.conv0 = SpectralConv1d(self.width, 2*factor*self.width, int(self.factor*self.final_dim), int(self.factor*self.final_dim)//2)  # last mode < D1 * (factor) / 2 
 
         # input: 4800, output D1//2=3200, mode=1200
-        self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, 3200, 1600)
+        # self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, 3200, 1600)
+        self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, self.final_dim//2, self.final_dim//4)
 
         # input: 3200, output D1//4=1600, mode=600
-        self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, 1600,800) # half about conv1
-        
+        # self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, 1600,800) # half about conv1
+        self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, self.final_dim//4, self.final_dim//8) # half about conv1
+
         # input: 1600, output D1//8=800, mode=400
-        self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,800,400)
-        
+        # self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,800,400)
+        self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,self.final_dim//8, self.final_dim//16)
+
         # input: 800, output D1//4=1600, mode=400
-        self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, 1600,400)
-        
-        # input 1600: output D1//2=3200, mode=600
-        self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, 3200, 800)
+        # self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, 1600,400)
+        self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, self.final_dim//4,self.final_dim//16)
+
+        # input 1600: output D1//2=3200, mode=800
+        # self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, 3200, 800)
+        self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, self.final_dim//2, self.final_dim//8)
 
         # input 3200, output 4800, mode=1600
-        self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, 4800, 1600)
+        # self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, 4800, 1600)
+        self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, int(self.factor*self.final_dim), self.final_dim//4)
 
         # input 4800,  output 6400,  model=2400
-        self.conv5 = SpectralConv1d(4*factor*self.width, self.width, 6400,2400) # will be reshaped
+        # self.conv5 = SpectralConv1d(4*factor*self.width, self.width, 6400,2400) # will be reshaped
+        self.conv5 = SpectralConv1d(4*factor*self.width, self.width, self.final_dim, int(self.factor*self.final_dim)//2) # will be reshaped
 
-        self.w0 = pointwise_op(self.width,2*factor*self.width,4800) #inconsistence with dim
+        self.w0 = pointwise_op(self.width,2*factor*self.width, int(self.factor*self.final_dim)) #inconsistence with dim
         
-        self.w1 = pointwise_op(2*factor*self.width, 4*factor*self.width, 3200) #
+        self.w1 = pointwise_op(2*factor*self.width, 4*factor*self.width, self.final_dim//2) #
         
-        self.w2 = pointwise_op(4*factor*self.width, 8*factor*self.width, 1600) #
+        self.w2 = pointwise_op(4*factor*self.width, 8*factor*self.width, self.final_dim//4) #
         
-        self.w2_1 = pointwise_op(8*factor*self.width, 16*factor*self.width, 800)
+        self.w2_1 = pointwise_op(8*factor*self.width, 16*factor*self.width, self.final_dim//8)
         
-        self.w2_9 = pointwise_op(16*factor*self.width, 8*factor*self.width, 1600)
+        self.w2_9 = pointwise_op(16*factor*self.width, 8*factor*self.width, self.final_dim//4)
         
-        self.w3 = pointwise_op(16*factor*self.width, 4*factor*self.width, 3200) #
+        self.w3 = pointwise_op(16*factor*self.width, 4*factor*self.width, self.final_dim//2) #
         
-        self.w4 = pointwise_op(8*factor*self.width, 2*factor*self.width, 4800)
+        self.w4 = pointwise_op(8*factor*self.width, 2*factor*self.width, int(self.factor*self.final_dim))
         
-        self.w5 = pointwise_op(4*factor*self.width, self.width, 6400) # will be reshaped
+        self.w5 = pointwise_op(4*factor*self.width, self.width, self.final_dim) # will be reshaped
 
         self.fc1 = nn.Linear(2*self.width, 4*self.width)
         # first three are normalized 3C waveforms, last three are associated PGAs
@@ -248,47 +259,56 @@ class Discriminator(nn.Module):
         self.ndim=ndim
         self.padding = pad  # pad the domain if input is non-periodic
         self.kernel_dim=kernel_dim
+        self.final_dim = self.ndim + self.padding
         
         self.fc0 = nn.Linear(self.in_width, self.width)
+
         # input: 6400, output D1*factor = 4800, model=2400
-        self.conv0 = SpectralConv1d(self.width, 2*factor*self.width, 4800, 2400)  # last mode < D1 * (factor) / 2 
+        self.conv0 = SpectralConv1d(self.width, 2*factor*self.width, int(self.factor*self.final_dim), int(self.factor*self.final_dim)//2)  # last mode < D1 * (factor) / 2 
 
         # input: 4800, output D1//2=3200, mode=1200
-        self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, 3200, 1600)
+        # self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, 3200, 1600)
+        self.conv1 = SpectralConv1d(2*factor*self.width, 4*factor*self.width, self.final_dim//2, self.final_dim//4)
 
         # input: 3200, output D1//4=1600, mode=600
-        self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, 1600,800) # half about conv1
-        
+        # self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, 1600,800) # half about conv1
+        self.conv2 = SpectralConv1d(4*factor*self.width, 8*factor*self.width, self.final_dim//4, self.final_dim//8) # half about conv1
+
         # input: 1600, output D1//8=800, mode=400
-        self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,800,400)
-        
+        # self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,800,400)
+        self.conv2_1 = SpectralConv1d(8*factor*self.width, 16*factor*self.width,self.final_dim//8, self.final_dim//16)
+
         # input: 800, output D1//4=1600, mode=400
-        self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, 1600,400)
-        
-        # input 1600: output D1//2=3200, mode=600
-        self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, 3200, 800)
+        # self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, 1600,400)
+        self.conv2_9 = SpectralConv1d(16*factor*self.width, 8*factor*self.width, self.final_dim//4,self.final_dim//16)
+
+        # input 1600: output D1//2=3200, mode=800
+        # self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, 3200, 800)
+        self.conv3 = SpectralConv1d(16*factor*self.width, 4*factor*self.width, self.final_dim//2, self.final_dim//8)
 
         # input 3200, output 4800, mode=1600
-        self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, 4800, 1600)
+        # self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, 4800, 1600)
+        self.conv4 = SpectralConv1d(8*factor*self.width, 2*factor*self.width, int(self.factor*self.final_dim), self.final_dim//4)
 
         # input 4800,  output 6400,  model=2400
-        self.conv5 = SpectralConv1d(4*factor*self.width, self.width, 6400,2400) # will be reshaped
+        # self.conv5 = SpectralConv1d(4*factor*self.width, self.width, 6400,2400) # will be reshaped
+        self.conv5 = SpectralConv1d(4*factor*self.width, self.width, self.final_dim, int(self.factor*self.final_dim)//2) # will be reshaped
 
-        self.w0 = pointwise_op(self.width,2*factor*self.width,4800) #inconsistence with dim
+        self.w0 = pointwise_op(self.width,2*factor*self.width, int(self.factor*self.final_dim)) #inconsistence with dim
         
-        self.w1 = pointwise_op(2*factor*self.width, 4*factor*self.width, 3200) #
+        self.w1 = pointwise_op(2*factor*self.width, 4*factor*self.width, self.final_dim//2) #
         
-        self.w2 = pointwise_op(4*factor*self.width, 8*factor*self.width, 1600) #
+        self.w2 = pointwise_op(4*factor*self.width, 8*factor*self.width, self.final_dim//4) #
         
-        self.w2_1 = pointwise_op(8*factor*self.width, 16*factor*self.width, 800)
+        self.w2_1 = pointwise_op(8*factor*self.width, 16*factor*self.width, self.final_dim//8)
         
-        self.w2_9 = pointwise_op(16*factor*self.width, 8*factor*self.width, 1600)
+        self.w2_9 = pointwise_op(16*factor*self.width, 8*factor*self.width, self.final_dim//4)
         
-        self.w3 = pointwise_op(16*factor*self.width, 4*factor*self.width, 3200) #
+        self.w3 = pointwise_op(16*factor*self.width, 4*factor*self.width, self.final_dim//2) #
         
-        self.w4 = pointwise_op(8*factor*self.width, 2*factor*self.width, 4800)
+        self.w4 = pointwise_op(8*factor*self.width, 2*factor*self.width, int(self.factor*self.final_dim))
         
-        self.w5 = pointwise_op(4*factor*self.width, self.width, 6400) # will be reshaped
+        self.w5 = pointwise_op(4*factor*self.width, self.width, self.final_dim) # will be reshaped
 
         self.fc1 = nn.Linear(2*self.width, 4*self.width)
         self.fc2 = nn.Linear(4*self.width, 1)
