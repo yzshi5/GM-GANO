@@ -26,6 +26,8 @@ pip install scipy
 pip install tqdm
 
 pip install opencv-python
+
+pip install cvxpy
 ```
 
 ## Load the pretrained model
