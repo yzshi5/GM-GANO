@@ -405,7 +405,6 @@ class Discriminator(nn.Module):
         ## instead of using the mean as the functional,  we can choose a kernel for last functional operation. 
         ## example can be found in https://github.com/neuraloperator/GANO/blob/main/GANO_volcano.ipynb  
         # comment 'x= torch.mean(x)' if you use a kernel for last function operator 
-        print("ok")
         kx = self.knet(grid)
         x = torch.einsum('bik,bik->bk', kx, x)/(self.ndim+self.padding)
         """
