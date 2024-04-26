@@ -4,6 +4,16 @@ import pylab as plt
 import torch.nn.functional as F
 import torch.nn as nn
 
+def kernel_loc(in_chan=2, up_dim=32):
+    """
+        Kernel network apply on grid
+    """
+    layers = nn.Sequential(
+                nn.Linear(in_chan, up_dim, bias=True), torch.nn.GELU(),
+                nn.Linear(up_dim, up_dim, bias=True), torch.nn.GELU(),
+                nn.Linear(up_dim, 1, bias=False)
+            )
+    return layers
 
 class SpectralConv1d(nn.Module):
     """
@@ -231,10 +241,7 @@ class Generator(nn.Module):
         # be sure to normalize the inpout conditional varaibles to [-1, 1], rather than [0, 1]
         x_out = self.fc2(x).permute(0, 2, 1)
         x_out[:,3:] = torch.mean(x_out[:,3:], dim=-1).unsqueeze(2)
-        x_out = torch.tanh(x_out)
-        
-        ## instead of using the mean as the functional,  we can choose a kernel for last functional operation. 
-        ## please https://github.com/neuraloperator/GANO/blob/main/GANO_volcano.ipynb        
+        x_out = torch.tanh(x_out)  
 
         if not self.training:
             x_out = x_out[:,:,:self.ndim]  
@@ -313,6 +320,8 @@ class Discriminator(nn.Module):
         self.fc1 = nn.Linear(2*self.width, 4*self.width)
         self.fc2 = nn.Linear(4*self.width, 1)
 
+        self.knet = kernel_loc(1, self.kernel_dim)
+
     def forward(self, x, label):
        
         # x shape is [batch_size, 4 , 12000]
@@ -321,7 +330,9 @@ class Discriminator(nn.Module):
 
         x = x.permute(0, 2, 1)        
         x = torch.cat([x, label], dim=2)
-        
+
+        grid = self.get_grid(x.shape, x.device)
+
         #print("D x shape: {}".format(x.shape))
         x_fc0 = self.fc0(x)
         x_fc0 = F.gelu(x_fc0)   
@@ -389,7 +400,23 @@ class Discriminator(nn.Module):
         x = F.gelu(x)
         x = self.fc2(x)
 
+ 
+        """
+        ## instead of using the mean as the functional,  we can choose a kernel for last functional operation. 
+        ## example can be found in https://github.com/neuraloperator/GANO/blob/main/GANO_volcano.ipynb  
+        # comment 'x= torch.mean(x)' if you use a kernel for last function operator 
+        print("ok")
+        kx = self.knet(grid)
+        x = torch.einsum('bik,bik->bk', kx, x)/(self.ndim+self.padding)
+        """
+
         # use mean for the last step
         x = torch.mean(x)
 
         return x
+    
+    def get_grid(self, shape, device):
+        batchsize, size_x = shape[0], shape[1]
+        gridx = torch.tensor(np.linspace(0, 1, size_x), dtype=torch.float)
+        gridx = gridx.reshape(1, size_x, 1).repeat([batchsize, 1, 1])
+        return gridx.to(device)
