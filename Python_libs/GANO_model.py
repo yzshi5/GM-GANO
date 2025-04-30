@@ -410,6 +410,7 @@ class Discriminator(nn.Module):
         """
 
         # use mean for the last step
+        # x = x.mean(dim=-1) #use this one if you found the training loss is too large, but in fact no difference
         x = torch.mean(x)
 
         return x
